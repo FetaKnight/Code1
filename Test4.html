@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Not the BEES!!!</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      height: 100%;
+      background: #000000;
+      color: #fff;
+      font-family: sans-serif;
+    }
+    #stats {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      font-size: 14px;
+      z-index: 10000;
+    }
+    .ball {
+      position: absolute;
+      width: 10px;
+      height: 5px;
+      background-color: rgb(255, 251, 1);
+      border-radius: 50%;
+      will-change: transform;
+      
+      
+      border-radius: 50%;
+      will-change: transform;
+    }
+    button {
+      margin-top: 10px;
+      padding: 5px 10px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div id="stats">
+    <div>Mode: <span id="mode">Frame-based</span></div>
+    <div>FPS: <span id="fps"></span></div>
+    <button id="toggleBtn">Toggle Mode</button>
+  </div>
+
+  <script>
+    const NUM_BALLS = 1000;
+
+    let balls = [];
+    let mode = 'frame'; // or 'time'
+
+    for (let i = 0; i < NUM_BALLS; i++) {
+      let span = document.createElement('span');
+      span.className = 'ball';
+      document.body.appendChild(span);
+
+      balls.push({
+        el: span,
+        x: Math.random() * window.innerWidth,
+        y: Math.random() * window.innerHeight,
+        angle: Math.random() * 2 * Math.PI,
+        speed: 30 + Math.random() * 70, // pixels per second
+      });
+    }
+
+    let lastTime = performance.now();
+    let frameCount = 0;
+    let fpsTimer = lastTime;
+
+    function animate(now) {
+      const deltaTime = (now - lastTime) / 1000; // in seconds
+      lastTime = now;
+
+      for (let ball of balls) {
+        if (mode === 'frame') {
+          // Move by fixed small step per frame
+          let dx = Math.cos(ball.angle) * 2;
+          let dy = Math.sin(ball.angle) * 2;
+          ball.x += dx;
+          ball.y += dy;
+        } else {
+          // Time-based movement
+          let distance = ball.speed * deltaTime;
+          let dx = Math.cos(ball.angle) * distance;
+          let dy = Math.sin(ball.angle) * distance;
+          ball.x += dx;
+          ball.y += dy;
+        }
+
+        // Wrap around edges
+        if (ball.x < 0) ball.x += window.innerWidth;
+        if (ball.x > window.innerWidth) ball.x -= window.innerWidth;
+        if (ball.y < 0) ball.y += window.innerHeight;
+        if (ball.y > window.innerHeight) ball.y -= window.innerHeight;
+
+        // Use transform: matrix(...) for positioning
+        let tx = ball.x;
+        let ty = ball.y;
+        let scale = 1;
+
+        // Matrix: [scaleX, skewY, skewX, scaleY, translateX, translateY]
+        ball.el.style.transform = `matrix(${scale},0,0,${scale},${tx},${ty})`;
+      }
+
+      // FPS calculation
+      frameCount++;
+      if (now - fpsTimer > 500) {
+        let fps = Math.round((frameCount * 1000) / (now - fpsTimer));
+        document.getElementById('fps').textContent = fps;
+        fpsTimer = now;
+        frameCount = 0;
+      }
+
+      requestAnimationFrame(animate);
+    }
+
+    animate(lastTime);
+
+    document.getElementById('toggleBtn').addEventListener('click', () => {
+      mode = (mode === 'frame') ? 'time' : 'frame';
+      document.getElementById('mode').textContent =
+        mode === 'frame' ? 'Frame-based' : 'Time-based';
+    });
+  </script>
+</body>
+</html>
